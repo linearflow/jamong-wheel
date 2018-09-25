@@ -1,0 +1,38 @@
+{
+    "Records": [
+        {
+            "eventVersion": "2.0",
+            "eventSource": "aws:s3",
+            "awsRegion": "ap-northeast-2",
+            "eventTime": "2018-08-10T05:11:31.515Z",
+            "eventName": "ObjectCreated:Put",
+            "userIdentity": {
+                "principalId": "AWS:AROAJIXUOCXUZU6IIWL52:heyho-production-1-Manager-O8JKJEYILR8U"
+            },
+            "requestParameters": {
+                "sourceIPAddress": "10.0.54.143"
+            },
+            "responseElements": {
+                "x-amz-request-id": "744066DAF42BDF73",
+                "x-amz-id-2": "dsB29F0SzvwKqUU2vpxHflNGm/KO+inioGqA0N1+MGqICkgf60BdGBho3SHE/cTJxBexuG8r63I="
+            },
+            "s3": {
+                "s3SchemaVersion": "1.0",
+                "configurationId": "871cadb9-2c20-4de1-b827-6d403c705e32",
+                "bucket": {
+                    "name": "larva.heyho.conversion-production-1",
+                    "ownerIdentity": {
+                        "principalId": "A2FQLVMM7CT8W3"
+                    },
+                    "arn": "arn:aws:s3:::org.heyho.conversion-production-1"
+                },
+                "object": {
+                    "key": "2018/08/13/22-06-02/f99eb49fb5c3c2be77cb1dbd5b2fff54/.818b15cd-8a2e-4b5c-bba9-dd0245bde29a.mp3",
+                    "size": 5844,
+                    "eTag": "aee2eff9a8e6c446df863a05d4649d7b",
+                    "sequencer": "005B6D1E8372A22C04"
+                }
+            }
+        }
+    ]
+}

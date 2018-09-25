@@ -1,0 +1,37 @@
+{
+  "name": "heyho",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "yarn && gulp deploy",
+    "undeploy": "yarn && gulp undeploy",
+    "list-outputs": "yarn && gulp list-outputs",
+    "start-api": "sam local start-api -t templates/deploy.yaml -n tests/env.json",
+    "test": "jest",
+    "clean": "gulp clean"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "17.0.0",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.9.1",
+    "gulp": "^3.9.1",
+    "gulp-shell": "^0.6.5",
+    "jest": "^23.4.2"
+  },
+  "dependencies": {
+    "@slack/client": "^4.3.1",
+    "aws-sdk": "^2.289.0",
+    "castv2-client": "^1.2.0",
+    "is-ip": "^2.0.0",
+    "lodash": "^4.17.10",
+    "moment-timezone": "^0.5.21",
+    "node-fetch": "^2.2.0",
+    "querystring": "^0.2.0",
+    "simpl-schema": "^1.5.3"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

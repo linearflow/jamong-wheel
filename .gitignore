@@ -1,0 +1,17 @@
+# Distribution
+node_modules/
+dist/
+output/
+out/
+build/
+
+# IDEA
+.idea/
+*.iml
+
+# Gradle
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+
+# Mac
+.DS_Store

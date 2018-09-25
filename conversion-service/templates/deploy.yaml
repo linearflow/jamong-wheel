@@ -1,0 +1,212 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "[HeyHo] Data Conversion App"
+
+Parameters:
+
+  Environment: 
+    Description: Envirionment Name
+    Type: String
+
+  StackName: 
+    Description: Cloudformation Stack Name
+    Type: String
+
+  SlackerStack:
+    Description: Slacker Stack Name
+    Type: String
+
+  SlackVerificationToken:
+    Description: Slack verification Token
+    Type: String
+
+  SlackCommand:
+    Description: Slack Slach Command Name
+    Type: String
+
+  ConversionBucketName:
+    Description: Conversion Bucket Name
+    Type: String
+
+  HistoryTableName:
+    Description: History Table Name
+    Type: String
+
+Resources:
+
+  Manager:
+    Type: AWS::Serverless::Function
+    DependsOn: [ConversionBucket, HistoryTable]
+    Properties:
+      Description: Heyho Manager
+      CodeUri: ../
+      Handler: src/manager/index.handler
+      Runtime: nodejs8.10
+      MemorySize: 512
+      Timeout: 10
+      Environment:
+        Variables:
+          CONVERSION_BUCKET: !Ref ConversionBucketName
+          HISTORY_TABLE_NAME: !Ref HistoryTableName
+      Policies:
+      - Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            # Resource: !Sub "arn:aws:dynamodb:::table/${HistoryTableName}"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - polly:StartSpeechSynthesisTask
+              - polly:SynthesizeSpeech
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${ConversionBucketName}/*"
+
+  SlackReciever:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Slack Reciever
+      CodeUri: ../
+      Handler: src/reciever/slack.handler
+      Runtime: nodejs8.10
+      MemorySize: 256
+      Timeout: 10
+      Environment:
+        Variables:
+          MANAGER: !Ref Manager
+          SLACK_VERIFICATION_TOKEN: !Ref SlackVerificationToken
+          SLACK_COMMAND: !Ref SlackCommand
+      Policies:
+      - Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource: "*"
+      Events:
+        DeleteResource:
+            Type: Api
+            Properties:
+              Path: /slack/commands/heyho
+              Method: post 
+
+  # Sender 내부에 Policy 지정 시, bucket notification 설정과 충돌 발생
+  Sender:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: output sender
+      CodeUri: ../
+      Handler: src/sender/index.handler
+      Role: !GetAtt SenderRole.Arn
+      Runtime: nodejs8.10
+      MemorySize: 256
+      Timeout: 10
+      Environment:
+        Variables:
+          HISTORY_TABLE_NAME: !Ref HistoryTableName
+
+  SenderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: SenderExecutionPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${ConversionBucketName}/*"
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:UpdateItem
+            # Resource: !Sub "arn:aws:dynamodb:::table/${HistoryTableName}"
+            Resource: "*"
+
+  ConversionBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: [SenderRole]
+    Properties:
+      BucketName: !Ref ConversionBucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt Sender.Arn
+
+  ConversionBucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Sender
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref "AWS::AccountId"
+      SourceArn: !Sub "arn:aws:s3:::${ConversionBucketName}"
+
+  HistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref HistoryTableName
+      KeySchema:
+      - AttributeName: id 
+        KeyType: HASH
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+Outputs:
+
+  StackName:
+    Description: A name of stack
+    Value: !Ref StackName
+
+  HistoryTableName:
+    Value: !Ref HistoryTable
+    Description: Table name of the history DynamoDB table
+
+  SlackReciverApiUrl:
+    Description: API Gateway endpoint URL for slack slash command
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/slack/commands/heyho
+
+#   # Export Values
+#   Arn:
+#     Description : slack command lambda arn
+#     Value: !GetAtt SlackCommand.Arn
+#     Export:
+#       Name: !Sub ${StackName}-arn
+  
