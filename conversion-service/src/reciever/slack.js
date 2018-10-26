@@ -69,7 +69,7 @@ exports.handler = async (event, context, callback) => {
                             channelId,
                             userId,
                         },
-                    }
+                    },
                 },
                 timeout: 15,
             };

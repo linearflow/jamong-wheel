@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "[Module] Slack Notification Lambda"
+
+Parameters:
+
+  Environment: 
+    Description: The Name of Environment (e.g. production/staging/local)
+    Type: String
+
+  StackName: 
+    Description: An stack name that will be prefixed to resource names
+    Type: String
+
+  SlackToken:
+    Description: Slack OAuth Access Token
+    Type: String
+
+Resources:
+
+  Slacker:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: slack notification handler
+      CodeUri: ../
+      Handler: src/index.handler
+      Runtime: nodejs8.10
+      MemorySize: 512
+      Timeout: 10
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          SLACK_TOKEN: !Ref SlackToken
+
+Outputs:
+
+  StackName:
+    Description: A name of stack
+    Value: !Ref StackName
+
+  # Export Values
+  Arn:
+    Description : slacker lambda arn
+    Value: !GetAtt Slacker.Arn
+    Export:
+      Name: !Sub ${StackName}-arn
+  
+  FunctionName:
+    Description : slacker lambda function name
+    Value: !Ref Slacker
+    Export:
+      Name: !Sub ${StackName}-function-name

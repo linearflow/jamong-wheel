@@ -1,33 +1,29 @@
 const { isPlainObject, isEmpty } = require('lodash');
 const gulp = require('gulp');
 
-const { Shell, AwsUtils } = require('../lib/js');
+const { AwsUtils, Shell } = require('../../lib/js');
 
-const app = 'heyho';
-const env = 'second';
+const app = 'slacker';
+const env = 'production';
 const version = 1;
-const region = 'ap-northeast-1';
 
+const region = 'ap-northeast-2';
 const awsUtils = AwsUtils.get({ region });
 
 const config = {
-    stack: `${env}-${app}-${version}`,
+    stack: `${app}-${env}-${version}`,
     region,
     build: {
         outputDir: 'dist',
     },
     pack: {
         template: 'templates/deploy.yaml',
-        bucket: `${env}.${app}.stack-${version}`,
+        bucket: `larva.modules.${app}.stack-${env}-${version}`,
     },
     vars: {
-        SlackerStack: `slacker-${env}-1`,
-        SlackCommand: '/echo',
-        ConversionBucketName: `${env}.${app}.conversion-${version}`,
-        HistoryTableName: `HeyhoHistories-${env}-${version}`,
     },
     slack: {
-        verficationTokenName: `/${env}/${app}/slack/verification-token`,
+        tokenName: '/slack/larva/token',
     },
 };
 
@@ -46,13 +42,13 @@ gulp.task('check-aws', async () => {
 
 gulp.task('clean', async () => {
     Shell.execute({
-        command: 'rm -rf dist && mkdir -p dist',
+        command: 'yarn install && rm -rf dist && mkdir -p dist',
     });
 });
 
 gulp.task('build-prod', ['clean'], async () => {
     Shell.execute({
-        command: 'yarn install --production',
+        command: 'rm -rf node_modules && yarn install --production',
     });
 });
 
@@ -77,14 +73,14 @@ gulp.task('package', ['create-lambda-bucket', 'build-prod'], async () => {
 });
 
 gulp.task('deploy', ['package'], async () => {
-    const slackVerificationToken = await awsUtils.getParameter(config.slack.verficationTokenName);
+    const slackToken = await awsUtils.getParameter(config.slack.tokenName);
     Shell.execute({
         command: `aws cloudformation --region ${region} deploy --template-file ${config.build.outputDir}/template-output.yaml \
             --stack-name ${config.stack} \
             --parameter-overrides \
                 Environment=${env} \
                 StackName=${config.stack} \
-                SlackVerificationToken=${slackVerificationToken} \
+                SlackToken=${slackToken} \
                 ${_buildTemplateParams(config.vars)} \
             --capabilities CAPABILITY_IAM`,
     });
@@ -97,12 +93,6 @@ gulp.task('clean-bucket', ['check-aws'], async () => {
                 aws s3 rb s3://${config.pack.bucket} --force
             fi`,
     });
-    Shell.execute({
-        command: `if ! aws s3 ls "s3://${config.vars.ConversionBucketName}" 2>&1 | grep -q 'NoSuchBucket'
-            then
-                aws s3 rb s3://${config.vars.ConversionBucketName} --force
-            fi`,
-    });
 });
 
 gulp.task('undeploy', ['clean', 'clean-bucket'], async () => {
@@ -112,14 +102,6 @@ gulp.task('undeploy', ['clean', 'clean-bucket'], async () => {
     });
     Shell.execute({
         command: 'yarn install',
-    });
-});
-
-gulp.task('list-outputs', ['check-aws'], async () => {
-    Shell.execute({
-        command: `aws cloudformation --region ${region} describe-stacks \
-            --stack-name ${config.stack} \
-            --query 'Stacks[0].Outputs'`,
     });
 });
 
