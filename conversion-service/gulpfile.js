@@ -22,7 +22,7 @@ const config = {
     },
     vars: {
         SlackerStack: `slacker-${env}-1`,
-        SlackCommand: '/echo',
+        SlackCommand: '/에코',
         ConversionBucketName: `${env}.${app}.conversion-${version}`,
         HistoryTableName: `HeyhoHistories-${env}-${version}`,
     },

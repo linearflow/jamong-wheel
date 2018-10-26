@@ -60,7 +60,7 @@ exports.handler = async (event, context, callback) => {
                 },
                 outputs: {
                     chromecast: {
-                        // isEnabled: true,
+                        isEnabled: true,
                     },
                     slack: {
                         isEnabled: true,

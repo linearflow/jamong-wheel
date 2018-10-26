@@ -6,7 +6,7 @@ const { chromeCastConfigSchema } = require('../schema');
 
 // TODO: chromecast 장비 관리를 위한 manager 및 UI 구성 필요
 const deviceIps = [
-    // '221.153.232.101', // gwangheon
+    '221.153.233.101', // home
 ];
 
 class ChromeCastHandler extends Handler {

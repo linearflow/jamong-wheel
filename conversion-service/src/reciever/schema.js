@@ -13,7 +13,7 @@ const eventSchema = new SimpleSchema({
 const envSchema = new SimpleSchema({
     MANAGER: { type: String, min: 1 },
     SLACK_VERIFICATION_TOKEN: { type: String, min: 1 },
-    SLACK_COMMAND: { type: String, regEx: /^\/\w+$/ },
+    SLACK_COMMAND: { type: String, regEx: /^\/[a-zA-Z0-9가-힣]+$/ },
 });
 
 module.exports = {
